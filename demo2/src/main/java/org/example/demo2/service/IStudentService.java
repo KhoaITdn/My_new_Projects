@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface IStudentService {
     List<Student> findAll();
-    Student getStudentByid(int id);
+    List<Student> getStudentByid(int id);
 
     void addNewStudent(Student student) throws SQLException;
      void save(Student student);

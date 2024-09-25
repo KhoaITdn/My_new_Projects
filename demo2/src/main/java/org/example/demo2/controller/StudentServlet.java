@@ -10,9 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet(name = "StudentServlet", value = "/student")
@@ -43,8 +41,9 @@ public class StudentServlet extends HttpServlet {
             case "view":
                 break;
             default:
-                findAll(request, response);
+                findAll(request,response);
         }
+
     }
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
@@ -90,64 +89,54 @@ public class StudentServlet extends HttpServlet {
                     throw new RuntimeException(e);
                 }
                 break;
+                case"delete":
+                    break;
+//            case "findAll":
+//                findAll(request,response);
             default:
                 findAll(request, response);
         }
 
     }
 
-    public void forwardCreateForm(HttpServletRequest request, HttpServletResponse response, String name, String email, int gender
-            , double point, int class_id) throws ServletException, IOException {
-        Student student = new Student(name, email, gender, point, new ClassName(class_id));
-        request.setAttribute("param", student);
-        List<ClassName> classNameList = iStudentService.findClasses();
-        request.setAttribute("list", classNameList);
-        request.getRequestDispatcher("create.jsp").forward(request, response);
-
-    }
-
     private void addNewStudent(HttpServletRequest request, HttpServletResponse response) throws IOException, SQLException, ServletException {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
-        int gender = Integer.parseInt(request.getParameter("gender"));
+        int gender  = Integer.parseInt(request.getParameter("gender"));
         double point = Double.parseDouble(request.getParameter("point"));
-        int class_id = Integer.parseInt(request.getParameter("class_id"));
+        int classId = Integer.parseInt(request.getParameter("class_id"));
 
-        if (regaxName(name)) {
-            request.setAttribute("errorMessage", "Dinh dang ten khong hop le.");
-            forwardCreateForm(request, response, name, email, gender, point, class_id);
-            return;
-        }
         // Kiểm tra email có tồn tại và có hợp lệ không
-        if (!iStudentService.isValidEmail(email)) {
+        if (! iStudentService.isValidEmail(email)) {
             request.setAttribute("errorMessage", "Định dạng email không hợp lệ. Vui lòng nhập lại.");
             request.setAttribute("name", name);
             request.setAttribute("email", email);
             request.setAttribute("gender", gender);
             request.setAttribute("point", point);
-            request.setAttribute("class_id", class_id);
+            request.setAttribute("class_id", classId);
             request.getRequestDispatcher("create.jsp").forward(request, response);
             return;
         }
 
-        if (iStudentService.emailExists(email, class_id)) {
+        if (iStudentService.emailExists(email,classId)) {
             request.setAttribute("errorMessage", "Email đã tồn tại. Vui lòng nhập lại.");
             request.setAttribute("name", name);
             request.setAttribute("email", email);
-            request.setAttribute("gender", gender);
+            request.setAttribute("gender",gender);
             request.setAttribute("point", point);
-            request.setAttribute("class_id", class_id);
+            request.setAttribute("class_id", classId);
             request.setAttribute("list", iStudentService.findClasses());
+
             request.getRequestDispatcher("create.jsp").forward(request, response);
-        } else {
-            ClassName clazz = new ClassName(class_id);
+        }else {
+            ClassName clazz = new ClassName(classId);
             Student student = new Student(name, email, gender, point, clazz);
             iStudentService.addNewStudent(student);
             response.sendRedirect(request.getContextPath() + "?action=findAll");
         }
     }
 
-    private void showDeleteForm(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void showDeleteForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int id = Integer.parseInt(request.getParameter("sid"));
         iStudentService.showDeleteForm(id);
         response.sendRedirect(request.getContextPath() + "?action=findAll");
@@ -155,16 +144,16 @@ public class StudentServlet extends HttpServlet {
 
     private void showUpdateForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int id = Integer.parseInt(request.getParameter("sid"));
-        Student studentList = iStudentService.getStudentByid(id);
-        List<ClassName> classNameList = iStudentService.findClasses();
-        request.setAttribute("listU", classNameList);
-        request.setAttribute("st", studentList);
+        List<Student> studentList = iStudentService.getStudentByid(id);
+        if (!studentList.isEmpty()) {
+            Student student = studentList.get(0);
+            request.setAttribute("st", student);
+        }
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("update.jsp");
         requestDispatcher.forward(request, response);
     }
 
-    private void save(HttpServletRequest request, HttpServletResponse response) throws
-            IOException, SQLException, ServletException {
+    private void save(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SQLException {
         int id = Integer.parseInt(request.getParameter("id"));
         String name = request.getParameter("name");
         String email = request.getParameter("email");
@@ -172,16 +161,6 @@ public class StudentServlet extends HttpServlet {
         double point = Double.parseDouble(request.getParameter("point"));
         int classId = Integer.parseInt(request.getParameter("class_id"));
 
-//        if (!iStudentService.isValidEmail(email)) {
-//            request.setAttribute("errorMessage", "Định dạng email không hợp lệ. Vui lòng nhập lại.");
-//            request.setAttribute("name", name);
-//            request.setAttribute("email", email);
-//            request.setAttribute("gender", gender);
-//            request.setAttribute("point", point);
-//            request.setAttribute("id", id);
-//            request.getRequestDispatcher("create.jsp").forward(request, response);
-//            return;
-//        }
         if (iStudentService.emailExists(email, id)) {
             request.setAttribute("errorMessage", "Email đã tồn tại. Vui lòng nhập lại.");
             Student student = new Student(name, email, gender, point, new ClassName(classId));
@@ -197,27 +176,14 @@ public class StudentServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "?action=findAll");
     }
 
-    public void forwardEditForm(HttpServletRequest request, HttpServletResponse response,int id, String name, String email, int gender
-            , double point, int class_id) throws ServletException, IOException {
 
-        Student student = new Student(id, name, email, gender, point, new ClassName(class_id));
-        request.setAttribute("st", student);
-        List<ClassName> classNameList = iStudentService.findClasses();
-        request.setAttribute("listU", classNameList);
-        request.getRequestDispatcher("update.jsp").forward(request,response);
 
-    }
 
-    private boolean regaxName(String name) {
-        return !name.matches("^[\\p{L}\\s]{1,50}$");
     }
 
 
 
 
-
-
-}
 
 
 

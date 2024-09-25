@@ -8,7 +8,7 @@ import java.util.List;
 public interface IStudentRepository {
     List<Student> findAll();
     List<Student> getStudentByname(String name);
-    Student getStudentByid(int id);
+    List<Student>  getStudentByid(int id);
     void addNewStudent(Student student) throws SQLException;
     void showDeleteForm(int id);
     void save(Student student);

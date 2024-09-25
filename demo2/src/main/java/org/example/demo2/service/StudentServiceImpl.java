@@ -5,7 +5,6 @@ import org.example.demo2.repository.repositorystudent.IStudentRepository;
 import org.example.demo2.repository.repositorystudent.StudentRepositoryImpl;
 
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.List;
 
 public class StudentServiceImpl implements IStudentService{
@@ -14,22 +13,21 @@ public class StudentServiceImpl implements IStudentService{
     public List<Student> findAll() {
         return iStudentRepository.findAll();
     }
-//
+    //
     @Override
-    public Student getStudentByid(int id) {
+    public List<Student> getStudentByid(int id) {
         return iStudentRepository.getStudentByid(id);
     }
 
-
     @Override
     public void addNewStudent(Student student) throws SQLException {
-    iStudentRepository.addNewStudent(student);
+        iStudentRepository.addNewStudent(student);
 
-    }
+    }z
 
     @Override
     public void save(Student student) {
-    iStudentRepository.save(student);
+        iStudentRepository.save(student);
     }
 
     @Override

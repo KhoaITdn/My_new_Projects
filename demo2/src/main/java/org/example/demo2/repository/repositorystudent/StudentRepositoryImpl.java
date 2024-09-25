@@ -16,10 +16,7 @@ public class StudentRepositoryImpl implements IStudentRepository {
     private static final String INSERT_STUDENT = "INSERT INTO student (name, email, gender,point, class_id) \n" + " VALUES ( ?, ?, ?, ?, ?)";
     private static final String DELETE_STUDENT = "DELETE FROM student WHERE id = ?";
     private static final String UPDATE_STUDENT = "UPDATE student SET name = ?, email = ?, gender = ?, point = ?, class_id = ? WHERE id = ?";
-    private static final String GET_STUDENT_BY_ID = "SELECT s.id, s.name, s.email, s.gender, s.point, c.class_id, c.class_name\n" +
-            "FROM student s\n" +
-            "INNER JOIN class c ON s.class_id = c.class_id   \n" +
-            "where id = ? ";
+    private static final String GET_STUDENT_BY_ID = "SELECT * FROM student WHERE id = ?";
     private static final String FIND_ALL_CLASS = "SELECT * FROM class ";
     private static final String FIND_BY_NAME = "SELECT s.id, s.name, s.email, s.gender, s.point, c.class_id, c.class_name " +
             "FROM student s " +
@@ -31,7 +28,7 @@ public class StudentRepositoryImpl implements IStudentRepository {
                     "FROM student s " +
                     "INNER JOIN class c ON s.class_id = c.class_id " +
                     "ORDER BY s.point DESC " +
-                    "LIMIT 10";
+                    "LIMIT 10";z
     @Override
     public List<Student> findAll() {
         Connection connection = baseRepository.getConnection();
@@ -97,9 +94,9 @@ public class StudentRepositoryImpl implements IStudentRepository {
 
 
     @Override
-    public Student getStudentByid(int id) {
+    public List<Student> getStudentByid(int id) {
         Connection connection = baseRepository.getConnection();
-        Student student = null;
+        List<Student> students = new ArrayList<>();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(GET_STUDENT_BY_ID);
             preparedStatement.setInt(1, id);
@@ -107,17 +104,17 @@ public class StudentRepositoryImpl implements IStudentRepository {
 
             List<Student> list = toList(resultSet);
             // Nếu muốn trả về danh sách sinh viên (nếu có nhiều sinh viên với cùng ID, mặc dù điều này hiếm xảy ra):
-//            student.addAll(list);
+            students.addAll(list);
 
 //             Nếu chỉ muốn trả về sinh viên đầu tiên:
              if (!list.isEmpty()) {
-                 student = (list.get(0));
+                 students.add(list.get(0));
              }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return student;
+        return students;
     }
 
     @Override
@@ -213,8 +210,7 @@ public class StudentRepositoryImpl implements IStudentRepository {
             int gender = resultSet.getInt("gender");
             double point = resultSet.getDouble("point");
             int classId = resultSet.getInt("class_id");
-            String className = resultSet.getString("class_name");
-            ClassName clazz = new ClassName(classId,className);
+            ClassName clazz = new ClassName(classId);
             Student student = new Student(id, name,email, gender, point, clazz);
             list.add(student);
         }
